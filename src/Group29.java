@@ -1199,32 +1199,145 @@ public class Group29
     }
 
 
-    /** Represents a Senior Developer user with extended privileges. */
+
+    /** Represents a Senior Developer user with extended privileges ADD & DELETE. */
     static class SeniorDeveloper extends JuniorDeveloper
     {
         public SeniorDeveloper(ResultSet rs) throws SQLException { super(rs); }
 
-    }
-
-    /**
-     * Represents a Manager user with administrative privileges.
-     */
-    static class Manager extends SeniorDeveloper
-    {
-        public Manager(ResultSet rs) throws SQLException { super(rs); }
-
-
         /**
-         * Displays the Manager-specific menu.
+         * Displays the Senior Developer menu.
+         * Inherits Read/Update from Junior, adds Add/Delete.
          */
         @Override
         void displayMenu()
         {
-            drawHeader(role + " Menu", username);
-            System.out.println(GREEN + "Welcome, Manager " + firstName + "!" + RESET);
+            Scanner sc = new Scanner(System.in);
+            int choice = 0;
+            do
+            {
+                try {
+                    drawHeader(role + " Menu (Senior)", username);
+                    System.out.println("1. List Contacts");
+                    System.out.println("2. Search Contacts");
+                    System.out.println("3. Sort Contacts");
+                    System.out.println("4. Update Contact");
+                    
+                    // --- SENIOR ÖZEL YETKİLERİ ---
+                    System.out.println(GREEN + "5. Add New Contact" + RESET); // INSERT
+                    System.out.println(RED + "6. Delete Contact" + RESET);    // DELETE
+                    
+                    System.out.println("7. Change Password");
+                    System.out.println("8. Logout");
+                    System.out.print(CYAN + "Select: " + RESET);
+
+                    String input = sc.nextLine().trim();
+                    if(input.isEmpty()) continue;
+                    choice = Integer.parseInt(input);
+
+                    switch (choice) {
+                        case 1: clearScreen(); listContacts(); pause(); break;
+                        case 2: clearScreen(); searchContacts(); break;
+                        case 3: clearScreen(); sortContacts(); pause(); break;
+                        case 4: clearScreen(); updateContact(); pause(); break; // extended from junior
+                        case 5: clearScreen(); addContact(); pause(); break;    
+                        case 6: clearScreen(); deleteContact(); pause(); break; 
+                        case 7: 
+                            clearScreen(); 
+                            System.out.print("New Password: "); 
+                            changePassword(sc.nextLine()); 
+                            break;
+                        case 8: break;
+                        default: System.out.println(RED + "Invalid choice!" + RESET); pause(); break;
+                    }
+                } catch (Exception e) { 
+                    System.out.println(RED + "Error: " + e.getMessage() + RESET); 
+                    pause(); 
+                }
+            } while (choice != 8);
+        }
+
+        /**
+         * Adds a new contact using SQL INSERT.
+         */
+        private void addContact() {
+            Scanner sc = new Scanner(System.in);
             System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
-            System.out.println("Future functionality: Add user, remove user, stats, etc.");
-            pause();
+            System.out.println(GREEN + "ADD NEW CONTACT" + RESET);
+            System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+
+            System.out.print(CYAN + "First Name (Required): " + RESET);
+            String fName = sc.nextLine().trim();
+            if(fName.isEmpty()) { System.out.println(RED + "First Name cannot be empty!" + RESET); return; }
+
+            System.out.print(CYAN + "Last Name (Required): " + RESET);
+            String lName = sc.nextLine().trim();
+            if(lName.isEmpty()) { System.out.println(RED + "Last Name cannot be empty!" + RESET); return; }
+
+            System.out.print(CYAN + "Phone (Primary): " + RESET);
+            String phone = sc.nextLine().trim();
+
+            System.out.print(CYAN + "Email: " + RESET);
+            String email = sc.nextLine().trim();
+
+            // SQL INSERT command
+            String query = "INSERT INTO contacts (first_name, last_name, phone_primary, email, created_at) VALUES (?, ?, ?, ?, NOW())";
+
+            try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                 PreparedStatement stmt = conn.prepareStatement(query)) {
+                
+                stmt.setString(1, fName);
+                stmt.setString(2, lName);
+                stmt.setString(3, phone.isEmpty() ? null : phone);
+                stmt.setString(4, email.isEmpty() ? null : email);
+
+                int rows = stmt.executeUpdate();
+                if(rows > 0) System.out.println(GREEN + "Contact added successfully!" + RESET);
+                else System.out.println(RED + "Failed to add contact." + RESET);
+                
+            } catch (SQLException e) {
+                System.out.println(RED + "Database Error: " + e.getMessage() + RESET);
+            }
+        }
+
+        /**
+         * Deletes a contact using SQL DELETE.
+         
+         */
+        private void deleteContact() {
+            Scanner sc = new Scanner(System.in);
+            System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+            System.out.println(RED + "DELETE CONTACT" + RESET);
+            System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+
+            System.out.print(CYAN + "Enter ID to delete (or 0 to cancel): " + RESET);
+            
+            try {
+                String input = sc.nextLine().trim();
+                if(input.isEmpty()) return;
+                int id = Integer.parseInt(input);
+                if (id == 0) return;
+
+                // Security pass
+                System.out.print(RED + "Are you sure? (type 'YES'): " + RESET);
+                if (!sc.nextLine().trim().equals("YES")) {
+                    System.out.println(YELLOW + "Cancelled." + RESET);
+                    return;
+                }
+
+               // SQL DELETE command
+                try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                     PreparedStatement stmt = conn.prepareStatement("DELETE FROM contacts WHERE contact_id = ?")) {
+                    
+                    stmt.setInt(1, id);
+                    int rows = stmt.executeUpdate();
+                    if (rows > 0) System.out.println(GREEN + "Contact deleted successfully." + RESET);
+                    else System.out.println(RED + "Contact ID not found." + RESET);
+                }
+            } catch (Exception e) {
+                System.out.println(RED + "Invalid input." + RESET);
+            }
         }
     }
-}
+    
+
