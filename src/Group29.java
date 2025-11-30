@@ -1339,5 +1339,16 @@ public class Group29
             }
         }
     }
+
+
+    /**
+     * Represents a Manager user with administrative privileges.
+     */
+    static class Manager extends SeniorDeveloper
+    {
+        public Manager(ResultSet rs) throws SQLException { super(rs); }
+
+    }
+}
     
 
