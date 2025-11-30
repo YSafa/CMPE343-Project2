@@ -1344,11 +1344,411 @@ public class Group29
     /**
      * Represents a Manager user with administrative privileges.
      */
+    /**
+     * Represents a Manager user with administrative privileges.
+     */
     static class Manager extends SeniorDeveloper
     {
         public Manager(ResultSet rs) throws SQLException { super(rs); }
 
-    }
-}
-    
+        /**
+         * Displays the Manager-specific menu.
+         *
+         * Manager yetkileri:
+         *  - Contact istatistikleri
+         *  - Kullanıcıları listeleme
+         *  - Kullanıcı ekleme
+         *  - Kullanıcı güncelleme
+         *  - Kullanıcı silme
+         *  - Şifre değiştirme
+         *  - Logout
+         */
+        @Override
+        void displayMenu()
+        {
+            Scanner sc = new Scanner(System.in);
+            int choice = 0;
 
+            do {
+                try {
+                    drawHeader(role + " Menu", username);
+                    System.out.println(GREEN + "Welcome, Manager " + firstName + " " + lastName + "!" + RESET);
+                    System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                    System.out.println("1. Show Contacts Statistics");
+                    System.out.println("2. List Users");
+                    System.out.println("3. Add New User");
+                    System.out.println("4. Update Existing User");
+                    System.out.println("5. Delete User");
+                    System.out.println("6. Change My Password");
+                    System.out.println("7. Logout");
+                    System.out.print(CYAN + "Select: " + RESET);
+
+                    String input = sc.nextLine().trim();
+                    choice = Integer.parseInt(input);
+
+                    switch (choice) {
+                        case 1:
+                            clearScreen();
+                            showContactStats();
+                            break;
+                        case 2:
+                            clearScreen();
+                            listUsers();
+                            break;
+                        case 3:
+                            clearScreen();
+                            addUser(sc);
+                            break;
+                        case 4:
+                            clearScreen();
+                            updateUser(sc);
+                            break;
+                        case 5:
+                            clearScreen();
+                            deleteUser(sc);
+                            break;
+                        case 6:
+                            clearScreen();
+                            System.out.print(CYAN + "New Password: " + RESET);
+                            String newPass = sc.nextLine();
+                            changePassword(newPass);
+                            break;
+                        case 7:
+                            // logout
+                            break;
+                        default:
+                            System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                            System.out.println(RED + "Invalid choice! Please select between 1–7." + RESET);
+                            System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                            break;
+                    }
+
+                    if (choice != 7) {
+                        pause();
+                    }
+
+                } catch (NumberFormatException e) {
+                    System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                    System.out.println(RED + "Invalid input. Please enter a number between 1–7." + RESET);
+                    System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                    pause();
+                } catch (Exception e) {
+                    System.out.println(RED + "Unexpected error: " + e.getMessage() + RESET);
+                    pause();
+                }
+
+            } while (choice != 7);
+        }
+
+
+        /**
+         * Lists all users from users table.
+         */
+        private void listUsers()
+        {
+            try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery("SELECT * FROM users ORDER BY user_id"))
+            {
+                System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                System.out.println(BLUE + "Users:" + RESET);
+                System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    System.out.printf(
+                            "%d) ID: %d  |  Username: %s  |  Role: %s%n" +
+                                    "   Name: %s %s%n" +
+                                    "   Created: %s | Updated: %s%n%n",
+                            count,
+                            rs.getInt("user_id"),
+                            rs.getString("username"),
+                            rs.getString("role"),
+                            rs.getString("first_name"),
+                            rs.getString("last_name"),
+                            rs.getString("created_at"),
+                            rs.getString("updated_at")
+                    );
+                }
+
+                if (count == 0) {
+                    System.out.println(YELLOW + "No users found." + RESET);
+                }
+
+            } catch (SQLException e) {
+                System.out.println(RED + "Error while listing users: " + e.getMessage() + RESET);
+            } catch (Exception e) {
+                System.out.println(RED + "Unexpected error: " + e.getMessage() + RESET);
+            }
+        }
+
+        /**
+         * Adds a new user to users table.
+         */
+        private void addUser(Scanner sc)
+        {
+            try {
+                System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                System.out.println(YELLOW + "ADD NEW USER" + RESET);
+                System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+
+                System.out.print(CYAN + "Username: " + RESET);
+                String newUsername = sc.nextLine().trim();
+
+                System.out.print(CYAN + "Password: " + RESET);
+                String newPassword = sc.nextLine().trim();
+
+                System.out.print(CYAN + "First Name: " + RESET);
+                String fn = sc.nextLine().trim();
+
+                System.out.print(CYAN + "Last Name: " + RESET);
+                String ln = sc.nextLine().trim();
+
+                System.out.println(GRAY + "Valid roles: TESTER, JUNIOR_DEV, SENIOR_DEV, MANAGER" + RESET);
+                System.out.print(CYAN + "Role: " + RESET);
+                String r = sc.nextLine().trim();
+
+                if (newUsername.isEmpty() || newPassword.isEmpty() || fn.isEmpty() || ln.isEmpty() || r.isEmpty()) {
+                    System.out.println(RED + "All fields are required. User not added." + RESET);
+                    return;
+                }
+
+                String sql = "INSERT INTO users (username, password_hash, first_name, last_name, role, created_at, updated_at) " +
+                        "VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+
+                try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                     PreparedStatement stmt = conn.prepareStatement(sql))
+                {
+                    stmt.setString(1, newUsername);
+                    stmt.setString(2, newPassword); // şu an hashing yok, tabloya plaintext gidiyor
+                    stmt.setString(3, fn);
+                    stmt.setString(4, ln);
+                    stmt.setString(5, r);
+
+                    int affected = stmt.executeUpdate();
+                    if (affected > 0) {
+                        System.out.println(GREEN + "User added successfully." + RESET);
+                    } else {
+                        System.out.println(RED + "User could not be added." + RESET);
+                    }
+
+                } catch (SQLException e) {
+                    System.out.println(RED + "Database error while adding user: " + e.getMessage() + RESET);
+                }
+
+            } catch (Exception e) {
+                System.out.println(RED + "Unexpected error while adding user: " + e.getMessage() + RESET);
+            }
+        }
+
+        /**
+         * Updates an existing user.
+         */
+        private void updateUser(Scanner sc)
+        {
+            try {
+                listUsers();
+                System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                System.out.print(CYAN + "Enter user_id to update: " + RESET);
+                String idStr = sc.nextLine().trim();
+
+                int uid;
+                try {
+                    uid = Integer.parseInt(idStr);
+                } catch (NumberFormatException e) {
+                    System.out.println(RED + "Invalid user_id." + RESET);
+                    return;
+                }
+
+                // önce seçilen user var mı kontrol
+                String checkSql = "SELECT * FROM users WHERE user_id = ?";
+                try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                     PreparedStatement checkStmt = conn.prepareStatement(checkSql))
+                {
+                    checkStmt.setInt(1, uid);
+                    ResultSet rs = checkStmt.executeQuery();
+                    if (!rs.next()) {
+                        System.out.println(RED + "User not found." + RESET);
+                        return;
+                    }
+
+                    String currentUsername = rs.getString("username");
+                    String currentFirst = rs.getString("first_name");
+                    String currentLast = rs.getString("last_name");
+                    String currentRole = rs.getString("role");
+
+                    System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                    System.out.println(YELLOW + "Leave blank to keep current value." + RESET);
+
+                    System.out.print(CYAN + "New Username (" + currentUsername + "): " + RESET);
+                    String newUsername = sc.nextLine().trim();
+
+                    System.out.print(CYAN + "New Password (hidden in DB, leave blank to keep): " + RESET);
+                    String newPassword = sc.nextLine().trim();
+
+                    System.out.print(CYAN + "New First Name (" + currentFirst + "): " + RESET);
+                    String newFirst = sc.nextLine().trim();
+
+                    System.out.print(CYAN + "New Last Name (" + currentLast + "): " + RESET);
+                    String newLast = sc.nextLine().trim();
+
+                    System.out.println(GRAY + "Valid roles: TESTER, JUNIOR_DEV, SENIOR_DEV, MANAGER" + RESET);
+                    System.out.print(CYAN + "New Role (" + currentRole + "): " + RESET);
+                    String newRole = sc.nextLine().trim();
+
+                    // boş bırakılanlar için eskisini kullan
+                    if (newUsername.isEmpty()) newUsername = currentUsername;
+                    if (newFirst.isEmpty()) newFirst = currentFirst;
+                    if (newLast.isEmpty()) newLast = currentLast;
+                    if (newRole.isEmpty()) newRole = currentRole;
+
+                    StringBuilder sql = new StringBuilder(
+                            "UPDATE users SET username=?, first_name=?, last_name=?, role=?, updated_at=NOW()"
+                    );
+                    boolean changePassword = !newPassword.isEmpty();
+                    if (changePassword) {
+                        sql.append(", password_hash=?");
+                    }
+                    sql.append(" WHERE user_id=?");
+
+                    try (PreparedStatement updStmt = conn.prepareStatement(sql.toString()))
+                    {
+                        int idx = 1;
+                        updStmt.setString(idx++, newUsername);
+                        updStmt.setString(idx++, newFirst);
+                        updStmt.setString(idx++, newLast);
+                        updStmt.setString(idx++, newRole);
+                        if (changePassword) {
+                            updStmt.setString(idx++, newPassword);
+                        }
+                        updStmt.setInt(idx, uid);
+
+                        int affected = updStmt.executeUpdate();
+                        if (affected > 0) {
+                            System.out.println(GREEN + "User updated successfully." + RESET);
+                        } else {
+                            System.out.println(RED + "User could not be updated." + RESET);
+                        }
+
+                    } catch (SQLException e) {
+                        System.out.println(RED + "Database error while updating user: " + e.getMessage() + RESET);
+                    }
+                }
+
+            } catch (Exception e) {
+                System.out.println(RED + "Unexpected error while updating user: " + e.getMessage() + RESET);
+            }
+        }
+
+
+        /**
+         * Deletes a user by user_id.
+         */
+        private void deleteUser(Scanner sc)
+        {
+            try {
+                listUsers();
+                System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                System.out.print(CYAN + "Enter user_id to DELETE: " + RESET);
+                String idStr = sc.nextLine().trim();
+
+                int uid;
+                try {
+                    uid = Integer.parseInt(idStr);
+                } catch (NumberFormatException e) {
+                    System.out.println(RED + "Invalid user_id." + RESET);
+                    return;
+                }
+
+                System.out.print(RED + "Are you sure you want to delete this user? (y/n): " + RESET);
+                String confirm = sc.nextLine().trim();
+                if (!confirm.equalsIgnoreCase("y")) {
+                    System.out.println(YELLOW + "Delete cancelled." + RESET);
+                    return;
+                }
+
+                String sql = "DELETE FROM users WHERE user_id = ?";
+
+                try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                     PreparedStatement stmt = conn.prepareStatement(sql))
+                {
+                    stmt.setInt(1, uid);
+                    int affected = stmt.executeUpdate();
+
+                    if (affected > 0) {
+                        System.out.println(GREEN + "User deleted successfully." + RESET);
+                    } else {
+                        System.out.println(RED + "User not found or not deleted." + RESET);
+                    }
+
+                } catch (SQLException e) {
+                    System.out.println(RED + "Database error while deleting user: " + e.getMessage() + RESET);
+                }
+
+            } catch (Exception e) {
+                System.out.println(RED + "Unexpected error while deleting user: " + e.getMessage() + RESET);
+            }
+        }
+
+
+        /**
+         * Shows basic statistics about contacts table.
+         */
+        private void showContactStats()
+        {
+            try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS))
+            {
+                System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                System.out.println(BLUE + "Contacts Statistics" + RESET);
+                System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+
+                // 1) toplam, linkedinli, linkedinsiz
+                String sqlCounts =
+                        "SELECT " +
+                                "  COUNT(*) AS total_contacts, " +
+                                "  SUM(CASE WHEN linkedin_url IS NOT NULL AND linkedin_url <> '' THEN 1 ELSE 0 END) AS with_linkedin, " +
+                                "  SUM(CASE WHEN linkedin_url IS NULL OR linkedin_url = '' THEN 1 ELSE 0 END) AS without_linkedin " +
+                                "FROM contacts";
+
+                try (Statement stmt = conn.createStatement();
+                     ResultSet rs = stmt.executeQuery(sqlCounts))
+                {
+                    if (rs.next()) {
+                        int total = rs.getInt("total_contacts");
+                        int withLinkedIn = rs.getInt("with_linkedin");
+                        int withoutLinkedIn = rs.getInt("without_linkedin");
+
+                        System.out.println("Total contacts       : " + total);
+                        System.out.println("With LinkedIn URL    : " + withLinkedIn);
+                        System.out.println("Without LinkedIn URL : " + withoutLinkedIn);
+                    }
+                }
+
+                // 2) en genç / en yaşlı
+                String sqlAges =
+                        "SELECT MIN(birth_date) AS oldest, MAX(birth_date) AS youngest " +
+                                "FROM contacts WHERE birth_date IS NOT NULL";
+
+                try (Statement stmt2 = conn.createStatement();
+                     ResultSet rs2 = stmt2.executeQuery(sqlAges))
+                {
+                    if (rs2.next()) {
+                        String oldest = rs2.getString("oldest");
+                        String youngest = rs2.getString("youngest");
+
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.println("Oldest birth_date   : " + (oldest != null ? oldest : "N/A"));
+                        System.out.println("Youngest birth_date : " + (youngest != null ? youngest : "N/A"));
+                    }
+                }
+
+            } catch (SQLException e) {
+                System.out.println(RED + "Database error while getting statistics: " + e.getMessage() + RESET);
+            } catch (Exception e) {
+                System.out.println(RED + "Unexpected error while getting statistics: " + e.getMessage() + RESET);
+            }
+        }
+    }
+
+}
