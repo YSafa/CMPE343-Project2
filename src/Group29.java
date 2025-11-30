@@ -549,13 +549,28 @@ public class Group29
                 System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
                 System.out.println(BLUE + "Contacts:" + RESET);
                 System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                int count = 0;
                 while (rs.next())
                 {
-                    System.out.printf("%d - %s %s | %s\n",
-                            rs.getInt("contact_id"),
+                    count++;
+                    System.out.printf("%d. %s %s %s (%s)\n" +
+                                    "   📞 Primary: %s | ☎ Secondary: %s\n" +
+                                    "   ✉ Email: %s\n" +
+                                    "   🔗 LinkedIn: %s\n" +
+                                    "   🎂 Birth Date: %s\n" +
+                                    "   🕒 Created: %s | Updated: %s\n\n",
+                            count,
                             rs.getString("first_name"),
+                            rs.getString("middle_name") != null ? rs.getString("middle_name") : "",
                             rs.getString("last_name"),
-                            rs.getString("email"));
+                            rs.getString("nickname") != null ? rs.getString("nickname") : "",
+                            rs.getString("phone_primary") != null ? rs.getString("phone_primary") : "N/A",
+                            rs.getString("phone_secondary") != null ? rs.getString("phone_secondary") : "N/A",
+                            rs.getString("email") != null ? rs.getString("email") : "N/A",
+                            rs.getString("linkedin_url") != null ? rs.getString("linkedin_url") : "N/A",
+                            rs.getString("birth_date") != null ? rs.getString("birth_date") : "N/A",
+                            rs.getString("created_at"),
+                            rs.getString("updated_at"));
                 }
             } catch (SQLException e)
             {
@@ -563,32 +578,184 @@ public class Group29
             }
         }
 
-        /** Searches contacts by name (first or last). */
+        /**
+         * Searches contacts from database.
+         *
+         * Users can search by only first, middle, last name, phone number or multiple field.
+         * In multiple field search user choose first, middle, last, nickname, phone number, email or birthdate.
+         *
+         * Search is not case-sensitive.
+         *  Shows full contact details as result.
+         *
+         *  Uses PreparedStatement to protect from SQL errors.
+         * */
+        @Override
         public void searchContacts()
         {
             Scanner sc = new Scanner(System.in);
-            System.out.print("Search term: ");
-            String name = sc.nextLine();
-            try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
-                 PreparedStatement stmt = conn.prepareStatement(
-                         "SELECT * FROM contacts WHERE first_name LIKE ? OR last_name LIKE ?"))
+            while (true)
             {
-                stmt.setString(1, "%" + name + "%");
-                stmt.setString(2, "%" + name + "%");
-                ResultSet rs = stmt.executeQuery();
+                clearScreen();
                 System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
-                System.out.println(BLUE + "Search Results:" + RESET);
+                System.out.println(YELLOW + "SEARCH CONTACTS" + RESET);
                 System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
-                while (rs.next())
+                System.out.println("1. Search by First/Middle Name");
+                System.out.println("2. Search by Last Name");
+                System.out.println("3. Search by Phone Number");
+                System.out.println("4. Multi-field Search (custom)");
+                System.out.println("5. Return to Menu");
+                System.out.print(CYAN + "Select an option (1–5): " + RESET);
+
+                String choice = sc.nextLine().trim();
+
+                if (choice.equals("5")) return;
+
+                String query = "SELECT * FROM contacts WHERE ";
+                List<String> params = new ArrayList<>();
+
+                switch (choice)
                 {
-                    System.out.printf("%s %s - %s\n",
-                            rs.getString("first_name"),
-                            rs.getString("last_name"),
-                            rs.getString("email"));
+                    // CASE 1: Search by First or Middle Name (case-insensitive)
+                    case "1":
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.print(CYAN + "Enter first or middle name (case-insensitive, partial match): " + RESET);
+                        String name = sc.nextLine();
+                        query += "(LOWER(first_name) LIKE LOWER(?) OR LOWER(middle_name) LIKE LOWER(?))";
+                        params.add("%" + name + "%");
+                        params.add("%" + name + "%");
+                        break;
+
+                    // CASE 2: Search by Last Name (case-insensitive)
+                    case "2":
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.print(CYAN + "Enter last name (partial match): " + RESET);
+                        String lName = sc.nextLine();
+                        query += "LOWER(last_name) LIKE LOWER(?)";
+                        params.add("%" + lName + "%");
+                        break;
+
+                    // CASE 3: Search by Phone number
+                    case "3":
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.print(CYAN + "Enter part of phone number: " + RESET);
+                        String phone = sc.nextLine();
+                        query += "phone_primary LIKE ? OR phone_secondary LIKE ?";
+                        params.add("%" + phone + "%");
+                        params.add("%" + phone + "%");
+                        break;
+
+                    //  CASE 4: Multi-field
+                    case "4":
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.println(BRIGHT_PURPLE + "You can combine multiple filters!");
+                        System.out.println("Leave blank to skip a field." + RESET);
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.print(CYAN + "First or Middle Name contains: " + RESET);
+                        String fn = sc.nextLine().trim();
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.print(CYAN + "Last Name contains: " + RESET);
+                        String ln = sc.nextLine().trim();
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.print(CYAN + "Nickname contains: " + RESET);
+                        String nn = sc.nextLine().trim();
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.print(CYAN + "Phone contains: " + RESET);
+                        String ph = sc.nextLine().trim();
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.print(CYAN + "Email contains: " + RESET);
+                        String em = sc.nextLine().trim();
+                        System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                        System.out.print(CYAN + "Birth month (YYYY-MM or leave blank): " + RESET);
+                        String bd = sc.nextLine().trim();
+
+                        List<String> filters = new ArrayList<>();
+
+                        if (!fn.isEmpty()) {
+                            filters.add("(LOWER(first_name) LIKE LOWER(?) OR LOWER(middle_name) LIKE LOWER(?))");
+                            params.add("%" + fn + "%");
+                            params.add("%" + fn + "%");
+                        }
+                        if (!ln.isEmpty()) {
+                            filters.add("LOWER(last_name) LIKE LOWER(?)");
+                            params.add("%" + ln + "%");
+                        }
+                        if (!nn.isEmpty()) {
+                            filters.add("LOWER(nickname) LIKE LOWER(?)");
+                            params.add("%" + nn + "%");
+
+                        }
+                        if (!ph.isEmpty()) {
+                            filters.add("(phone_primary LIKE ? OR phone_secondary LIKE ?)");
+                            params.add("%" + ph + "%");
+                            params.add("%" + ph + "%");
+                        }
+                        if (!em.isEmpty()) {
+                            filters.add("LOWER(email) LIKE LOWER(?)");
+                            params.add("%" + em + "%");
+                        }
+                        if (!bd.isEmpty()) {
+                            filters.add("birth_date LIKE ?");
+                            params.add(bd + "%");
+                        }
+
+                        if (filters.isEmpty()) {
+                            System.out.println(YELLOW + "No filters entered. Returning to menu..." + RESET);
+                            pause();
+                            return;
+                        }
+
+                        query += String.join(" AND ", filters);
+                        break;
+
+                    default:
+                        System.out.println(RED + "Invalid choice." + RESET);
+                        pause();
+                        continue;
                 }
-            } catch (SQLException e)
-            {
-                System.out.println(RED + "Search failed." + RESET);
+
+                try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                     PreparedStatement stmt = conn.prepareStatement(query))
+                {
+                    for (int i = 0; i < params.size(); i++)
+                        stmt.setString(i + 1, params.get(i));
+
+                    ResultSet rs = stmt.executeQuery();
+                    clearScreen();
+                    System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                    System.out.println(GREEN + "Search Results:" + RESET);
+                    System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+
+                    int count = 0;
+                    while (rs.next()) {
+                        count++;
+                        System.out.printf("%d. %s %s %s (%s)\n" +
+                                        "   📞 Primary: %s | ☎ Secondary: %s\n" +
+                                        "   ✉ Email: %s\n" +
+                                        "   🔗 LinkedIn: %s\n" +
+                                        "   🎂 Birth Date: %s\n" +
+                                        "   🕒 Created: %s | Updated: %s\n\n",
+                                count,
+                                rs.getString("first_name"),
+                                rs.getString("middle_name") != null ? rs.getString("middle_name") : "",
+                                rs.getString("last_name"),
+                                rs.getString("nickname") != null ? rs.getString("nickname") : "",
+                                rs.getString("phone_primary") != null ? rs.getString("phone_primary") : "N/A",
+                                rs.getString("phone_secondary") != null ? rs.getString("phone_secondary") : "N/A",
+                                rs.getString("email") != null ? rs.getString("email") : "N/A",
+                                rs.getString("linkedin_url") != null ? rs.getString("linkedin_url") : "N/A",
+                                rs.getString("birth_date") != null ? rs.getString("birth_date") : "N/A",
+                                rs.getString("created_at"),
+                                rs.getString("updated_at"));
+                    }
+
+                    if (count == 0)
+                        System.out.println(YELLOW + "No matching contacts found." + RESET);
+
+                } catch (SQLException e) {
+                    System.out.println(RED + "Database error: " + e.getMessage() + RESET);
+                }
+
+                pause();
             }
         }
 
