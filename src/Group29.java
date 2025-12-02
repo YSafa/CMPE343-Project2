@@ -364,6 +364,27 @@ public class Group29
         new Scanner(System.in).nextLine();
     }
 
+    public static String hashPassword(String password)
+    {
+        try
+        {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = md.digest(password.getBytes("UTF-8"));
+
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes)
+            {
+                sb.append(String.format("%02x", b)); // convert to hex
+            }
+            return sb.toString();
+        }
+        catch (Exception e)
+        {
+            System.out.println(RED + "Hashing error: " + e.getMessage() + RESET);
+            return null;
+        }
+    }
+
     /**
      * Displays a single contact's full information in a consistent format.
      * Used by updateContact(), addContact(), deleteContact(), etc.
@@ -419,7 +440,7 @@ public class Group29
              PreparedStatement stmt = conn.prepareStatement(
                      "SELECT * FROM users WHERE BINARY username=? AND BINARY password_hash=?")) {
             stmt.setString(1, username);
-            stmt.setString(2, password);
+            stmt.setString(2, hashPassword(password));
             ResultSet rs = stmt.executeQuery();
             if (rs.next())
             {
@@ -487,7 +508,7 @@ public class Group29
             try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
                  PreparedStatement stmt = conn.prepareStatement(
                          "UPDATE users SET password_hash=? WHERE user_id=?")) {
-                stmt.setString(1, newPass);
+                stmt.setString(1, hashPassword(newPass));
                 stmt.setInt(2, id);
                 stmt.executeUpdate();
                 System.out.println(GREEN + "Password updated successfully." + RESET);
@@ -1521,7 +1542,7 @@ public class Group29
                      PreparedStatement stmt = conn.prepareStatement(sql))
                 {
                     stmt.setString(1, newUsername);
-                    stmt.setString(2, newPassword); // şu an hashing yok, tabloya plaintext gidiyor
+                    stmt.setString(2, hashPassword(newPassword));
                     stmt.setString(3, fn);
                     stmt.setString(4, ln);
                     stmt.setString(5, r);
@@ -1620,7 +1641,7 @@ public class Group29
                         updStmt.setString(idx++, newLast);
                         updStmt.setString(idx++, newRole);
                         if (changePassword) {
-                            updStmt.setString(idx++, newPassword);
+                            updStmt.setString(idx++, hashPassword(newPassword));
                         }
                         updStmt.setInt(idx, uid);
 
