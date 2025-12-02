@@ -5,6 +5,9 @@
 
 import java.sql.*;
 import java.util.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class Group29
 {
@@ -66,14 +69,32 @@ public class Group29
                 pause();
                 loggedUser.displayMenu();
 
-                System.out.print(YELLOW + "\nWould you like to login as another user? (y/n): " + RESET);
-                if (!sc.nextLine().equalsIgnoreCase("y")) break;
+                String again;
+                do {
+                    System.out.print(YELLOW + "\nWould you like to login as another user? (y/n): " + RESET);
+                    again = sc.nextLine().trim().toLowerCase();
+
+                    if (!again.equals("y") && !again.equals("n")) {
+                        System.out.println(RED + "Please enter 'y' or 'n' only." + RESET);
+                    }
+                } while (!again.equals("y") && !again.equals("n"));
+                if (again.equals("n")) break;
             } else
             {
                 System.out.println(RED + "\nInvalid credentials." + RESET);
                 pause();
-                System.out.print(YELLOW + "\nTry again? (y/n): " + RESET);
-                if (!sc.nextLine().equalsIgnoreCase("y")) break;
+
+                String retry;
+                do {
+                    System.out.print(YELLOW + "\nTry again? (y/n): " + RESET);
+                    retry = sc.nextLine().trim().toLowerCase();
+
+                    if (!retry.equals("y") && !retry.equals("n")) {
+                        System.out.println(RED + "Please enter 'y' or 'n' only." + RESET);
+                    }
+                } while (!retry.equals("y") && !retry.equals("n"));
+
+                if (retry.equals("n")) break;
             }
         }
         System.out.println(GREEN + "\nGoodbye 👋" + RESET);
@@ -1288,84 +1309,182 @@ public class Group29
             System.out.println(GREEN + "ADD NEW CONTACT" + RESET);
             System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
 
-            System.out.print(CYAN + "First Name (Required): " + RESET);
-            String fName = sc.nextLine().trim();
-            if(fName.isEmpty())
+            String fName;
+            do
             {
-                System.out.println(RED + "First Name cannot be empty!" + RESET);
-                return;
-            }
+                System.out.print(CYAN + "First Name (Required): " + RESET);
+                fName = sc.nextLine().trim();
 
-            System.out.println(CYAN+ "Middle Name (optional):"+ RESET );
+                if (fName.isEmpty())
+                    System.out.println(RED + "First Name cannot be empty! Please enter a valid name." + RESET);
+
+            } while (fName.isEmpty());
+
+
+            System.out.print(CYAN+ "Middle Name (optional):"+ RESET );
             String middle = sc.nextLine().trim();
             if( middle.isEmpty())
             {
-                System.out.println(RED + "Middle Name cannot be empty!" + RESET);
+                middle = null;
             }
 
-            System.out.print(CYAN + "Last Name (Required): " + RESET);
-            String lName = sc.nextLine().trim();
-            if(lName.isEmpty())
+            String lName;
+            do
             {
-                System.out.println(RED + "Last Name cannot be empty!" + RESET);
-                return;
+                System.out.print(CYAN + "Last Name (Required): " + RESET);
+                lName = sc.nextLine().trim();
+
+                if(lName.isEmpty()) {
+                    System.out.println(RED + "Last Name cannot be empty!" + RESET);
+                }
+
+            }while(lName.isEmpty());
+
+            String nick;
+            do {
+                System.out.print(CYAN + "Nickname (Required): " + RESET);
+                nick = sc.nextLine().trim();
+
+                if (nick.isEmpty()) {
+                    System.out.println(RED + "Nickname cannot be empty!" + RESET);
+                }
+
+            } while (nick.isEmpty());
+
+            String phone;
+            do {
+                System.out.print(CYAN + "Primary Phone (Required, please enter an 10-digit number, 5554443322): " + RESET);
+                phone = sc.nextLine().trim();
+
+                if (phone.isEmpty()) {
+                    System.out.println(RED + "Phone number cannot be empty!" + RESET);
+                }
+                else if (phone.length() != 10) {
+                    System.out.println(RED + "Phone number must be exactly 10 digits!" + RESET);
+                    phone = ""; // yeniden denemesi için sıfırla
+                }
+                else if (!phone.matches("\\d+")) {        //\\d+ ifadesi, bir veya daha fazla rakamdan (0–9) oluşan metinleri kontrol eder; sadece sayısal girişleri doğrulamak için kullanılır.
+                    System.out.println(RED + "Phone number must contain only digits!" + RESET);
+                    phone = "";
+                }
+
+            } while (phone.isEmpty());
+
+
+            String phoneSecondary;
+            do {
+                System.out.print(CYAN + "Secondary Phone (Optional, please enter an 10-digit number if entered): " + RESET);
+                phoneSecondary = sc.nextLine().trim();
+
+                // Kullanıcı bir şey girdiyse formatı kontrol et
+                if (!phoneSecondary.isEmpty()) {
+                    if (!phoneSecondary.matches("\\d{10}")) { // sadece sayı mı ve 10 haneden mi oluşuyo onu kontrol ediyo
+                        System.out.println(RED + "Invalid phone number! It must be exactly 10 digits." + RESET);
+                        phoneSecondary = "retry"; // döngü yeniden başlar
+                    }
+                }
+
+            } while (phoneSecondary.equals("retry"));
+
+            // Eğer kullanıcı boş bıraktıysa null olarak işaretle
+            if (phoneSecondary.isEmpty()) {
+                phoneSecondary = null;
             }
 
-            System.out.print(CYAN + "Phone (Primary): " + RESET);
-            String phone = sc.nextLine().trim();
-            if(phone.isEmpty())
-            {
-                System.out.println(RED + "Phone number cannot be empty!" + RESET);
-                return;
+
+            String email;
+            do {
+                System.out.print(CYAN + "Email (Required, exmp: ahmet@example.com): " + RESET);
+                email = sc.nextLine().trim();
+
+                if (email.isEmpty()) {
+                    System.out.println(RED + "Email cannot be empty!" + RESET);
+                }
+                else if (!email.contains("@")) {
+                    System.out.println(RED + "Invalid email! It must contain '@' symbol." + RESET);
+                    email = ""; // sıfırla ki tekrar denesin
+                }
+
+            } while (email.isEmpty());
+
+
+            String linkedin;
+            do {
+                System.out.print(CYAN + "LinkedIn URL (Optional, must contain 'linkedin.com' if entered): " + RESET);
+                linkedin = sc.nextLine().trim();
+
+                // Kullanıcı bir şey yazdıysa kontrol et
+                if (!linkedin.isEmpty()) {
+                    if (!linkedin.toLowerCase().contains("linkedin.com")) {
+                        System.out.println(RED + "Invalid LinkedIn URL! It must contain 'linkedin.com'." + RESET);
+                        linkedin = "retry"; // tekrar denemesi için
+                    }
+                }
+
+            } while (linkedin.equals("retry"));
+
+            if (linkedin.isEmpty()) {
+                linkedin = null;
             }
 
-            System.out.println(CYAN+ "Secondary Phone (optional):"+ RESET );
-            String phoneSecondary = sc.nextLine().trim();
-            if(phoneSecondary.isEmpty())
-            {
-                System.out.println(RED + "Secondary Phone cannot be empty!" + RESET);
-                return;
-            }
 
-            System.out.print(CYAN + "Email (Required) : " + RESET);
-            String email = sc.nextLine().trim();
-            if(email.isEmpty())
-            {
-                System.out.println(RED + "Email cannot be empty!" + RESET);
-                return;
-            }
 
-            System.out.println(CYAN+ "LinkedIn URL (optional):"+ RESET );
-            String linkedin = sc.nextLine().trim();
-            if(linkedin.isEmpty())
-            {
-                System.out.println(RED + "LinkedIn URL cannot be empty!" + RESET);
-                return;
-            }
 
-            System.out.println(CYAN+ "Nickname (optional):"+ RESET );
-            String nick = sc.nextLine().trim();
-            if( nick.isEmpty())
-            {
-                System.out.println(RED + "Nickname cannot be empty!" + RESET);
-                return;
-            }
+            LocalDate birthDate = null;
+            // YYYY-MM-DD biçiminde tarih formatını tanımla
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            do {
+                System.out.print(CYAN + "Birth Date (Required, format: YYYY-MM-DD, e.g. 2004-09-21): " + RESET);
+                String dateInput = sc.nextLine().trim();
+
+                // Boş giriş kontrolü
+                if (dateInput.isEmpty()) {
+                    System.out.println(RED + "Birth Date cannot be empty!" + RESET);
+                    continue;
+                }
+
+                try {
+                    // Tarihi belirtilen formatta çözümlemeye çalış
+                    birthDate = LocalDate.parse(dateInput, formatter);
+
+                    // Gelecekteki bir tarih girildiyse reddet
+                    if (birthDate.isAfter(LocalDate.now())) {
+                        System.out.println(RED + "Birth Date cannot be in the future!" + RESET);
+                        birthDate = null; // Tekrar sorması için sıfırla
+                    }
+
+                } catch (DateTimeParseException e) {
+                    // Format veya tarih geçersizse kullanıcıyı uyar
+                    System.out.println(RED + "Invalid date! Please enter in YYYY-MM-DD format (e.g. 2001-09-15)." + RESET);
+                    birthDate = null;
+                }
+
+            } while (birthDate == null); // Doğru ve geçerli bir tarih girilene kadar tekrar et
 
 
 
 
             // SQL INSERT command
-            String query = "INSERT INTO contacts (" + "first_name, last_name, middle_name, phone_secondary, linkedin_url, " + "created_at, updated_at) " + "VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+            String query = "INSERT INTO contacts (" +
+                    "first_name, middle_name, last_name, nickname, " +
+                    "phone_primary, phone_secondary, email, " +
+                    "linkedin_url, birth_date, created_at, updated_at" +
+                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
 
 
             try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
                  PreparedStatement stmt = conn.prepareStatement(query)) {
                 
                 stmt.setString(1, fName);
-                stmt.setString(2, lName);
-                stmt.setString(3, middle);
-                stmt.setString(4, phoneSecondary);
-                stmt.setString(5, linkedin);
+                stmt.setString(2, middle);
+                stmt.setString(3, lName);
+                stmt.setString(4, nick);
+                stmt.setString(5, phone);
+                stmt.setString(6, phoneSecondary);
+                stmt.setString(7, email);
+                stmt.setString(8, linkedin);
+                stmt.setDate(9, java.sql.Date.valueOf(birthDate));
 
                 int rows = stmt.executeUpdate();
                 if(rows > 0) System.out.println(GREEN + "Contact added successfully!" + RESET);
@@ -1737,9 +1856,17 @@ public class Group29
                     return;
                 }
 
-                System.out.print(RED + "Are you sure you want to delete this user? (y/n): " + RESET);
-                String confirm = sc.nextLine().trim();
-                if (!confirm.equalsIgnoreCase("y")) {
+                String confirm;
+                do
+                {
+                    System.out.print(RED + "Are you sure you want to delete this user? (y/n): " + RESET);
+                    confirm = sc.nextLine().trim().toLowerCase();
+
+                    if(!confirm.equals("y") && !confirm.equals("n"))
+                        System.out.println(RED + "Please enter 'y' or 'n' only. Are you sure you want to delete this user? (y/n): " + RESET);
+
+                }while (!confirm.equals("y") && !confirm.equals("n"));
+                if (confirm.equals("n")) {
                     System.out.println(YELLOW + "Delete cancelled." + RESET);
                     return;
                 }
