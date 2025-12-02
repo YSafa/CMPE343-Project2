@@ -440,7 +440,7 @@ public class Group29
              PreparedStatement stmt = conn.prepareStatement(
                      "SELECT * FROM users WHERE BINARY username=? AND BINARY password_hash=?")) {
             stmt.setString(1, username);
-            stmt.setString(2, hashPassword(password));
+            stmt.setString(2, password);
             ResultSet rs = stmt.executeQuery();
             if (rs.next())
             {
@@ -1281,7 +1281,8 @@ public class Group29
         /**
          * Adds a new contact using SQL INSERT.
          */
-        private void addContact() {
+        private void addContact()
+        {
             Scanner sc = new Scanner(System.in);
             System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
             System.out.println(GREEN + "ADD NEW CONTACT" + RESET);
@@ -1289,28 +1290,82 @@ public class Group29
 
             System.out.print(CYAN + "First Name (Required): " + RESET);
             String fName = sc.nextLine().trim();
-            if(fName.isEmpty()) { System.out.println(RED + "First Name cannot be empty!" + RESET); return; }
+            if(fName.isEmpty())
+            {
+                System.out.println(RED + "First Name cannot be empty!" + RESET);
+                return;
+            }
+
+            System.out.println(CYAN+ "Middle Name (optional):"+ RESET );
+            String middle = sc.nextLine().trim();
+            if( middle.isEmpty())
+            {
+                System.out.println(RED + "Middle Name cannot be empty!" + RESET);
+            }
 
             System.out.print(CYAN + "Last Name (Required): " + RESET);
             String lName = sc.nextLine().trim();
-            if(lName.isEmpty()) { System.out.println(RED + "Last Name cannot be empty!" + RESET); return; }
+            if(lName.isEmpty())
+            {
+                System.out.println(RED + "Last Name cannot be empty!" + RESET);
+                return;
+            }
 
             System.out.print(CYAN + "Phone (Primary): " + RESET);
             String phone = sc.nextLine().trim();
+            if(phone.isEmpty())
+            {
+                System.out.println(RED + "Phone number cannot be empty!" + RESET);
+                return;
+            }
 
-            System.out.print(CYAN + "Email: " + RESET);
+            System.out.println(CYAN+ "Secondary Phone (optional):"+ RESET );
+            String phoneSecondary = sc.nextLine().trim();
+            if(phoneSecondary.isEmpty())
+            {
+                System.out.println(RED + "Secondary Phone cannot be empty!" + RESET);
+                return;
+            }
+
+            System.out.print(CYAN + "Email (Required) : " + RESET);
             String email = sc.nextLine().trim();
+            if(email.isEmpty())
+            {
+                System.out.println(RED + "Email cannot be empty!" + RESET);
+                return;
+            }
+
+            System.out.println(CYAN+ "LinkedIn URL (optional):"+ RESET );
+            String linkedin = sc.nextLine().trim();
+            if(linkedin.isEmpty())
+            {
+                System.out.println(RED + "LinkedIn URL cannot be empty!" + RESET);
+                return;
+            }
+
+            System.out.println(CYAN+ "Nickname (optional):"+ RESET );
+            String nick = sc.nextLine().trim();
+            if( nick.isEmpty())
+            {
+                System.out.println(RED + "Nickname cannot be empty!" + RESET);
+                return;
+            }
+
+
+
 
             // SQL INSERT command
-            String query = "INSERT INTO contacts (first_name, last_name, phone_primary, email, created_at) VALUES (?, ?, ?, ?, NOW())";
+            String query = "INSERT INTO contacts (" + "first_name, last_name, middle_name, phone_secondary, linkedin_url, " + "created_at, updated_at) " + "VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+
 
             try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
                  PreparedStatement stmt = conn.prepareStatement(query)) {
                 
                 stmt.setString(1, fName);
                 stmt.setString(2, lName);
-                stmt.setString(3, phone.isEmpty() ? null : phone);
-                stmt.setString(4, email.isEmpty() ? null : email);
+                stmt.setString(3, middle);
+                stmt.setString(4, phoneSecondary);
+                stmt.setString(5, linkedin);
 
                 int rows = stmt.executeUpdate();
                 if(rows > 0) System.out.println(GREEN + "Contact added successfully!" + RESET);
