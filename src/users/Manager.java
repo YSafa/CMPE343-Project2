@@ -298,21 +298,19 @@ public class Manager extends SeniorDeveloper
      */
     private void showContactStats()
     {
-        try (Connection conn = DBUtils.connect())
-        {
+        try (Connection conn = DBUtils.connect()) {
             System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
             System.out.println(BLUE + "Contacts Statistics" + RESET);
             System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
 
             String statsQuery = """
-                SELECT COUNT(*) AS total,
-                       SUM(CASE WHEN linkedin_url IS NOT NULL AND linkedin_url <> '' THEN 1 ELSE 0 END) AS with_linkedin,
-                       SUM(CASE WHEN linkedin_url IS NULL OR linkedin_url = '' THEN 1 ELSE 0 END) AS without_linkedin
-                FROM contacts
-                """;
+                    SELECT COUNT(*) AS total,
+                           SUM(CASE WHEN linkedin_url IS NOT NULL AND linkedin_url <> '' THEN 1 ELSE 0 END) AS with_linkedin,
+                           SUM(CASE WHEN linkedin_url IS NULL OR linkedin_url = '' THEN 1 ELSE 0 END) AS without_linkedin
+                    FROM contacts
+                    """;
             try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(statsQuery))
-            {
+                 ResultSet rs = stmt.executeQuery(statsQuery)) {
                 if (rs.next()) {
                     System.out.println("Total contacts       : " + rs.getInt("total"));
                     System.out.println("With LinkedIn URL    : " + rs.getInt("with_linkedin"));
@@ -322,17 +320,36 @@ public class Manager extends SeniorDeveloper
 
             String ageQuery = "SELECT MIN(birth_date) AS oldest, MAX(birth_date) AS youngest FROM contacts WHERE birth_date IS NOT NULL";
             try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(ageQuery))
-            {
+                 ResultSet rs = stmt.executeQuery(ageQuery)) {
                 if (rs.next()) {
                     System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
                     System.out.println("Oldest birth_date   : " + rs.getString("oldest"));
                     System.out.println("Youngest birth_date : " + rs.getString("youngest"));
                 }
             }
+            String avgAgeQuery = """
+                    SELECT AVG(TIMESTAMPDIFF(YEAR, birth_date, CURDATE())) AS avg_age
+                    FROM contacts
+                    WHERE birth_date IS NOT NULL
+                    """;
+
+
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(avgAgeQuery)) {
+                if (rs.next()) {
+                    System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                    double avgAge = rs.getDouble("avg_age");
+
+                    if (rs.wasNull()) {
+                        System.out.println("Average age         : N/A (no birth dates available)");
+                    } else {
+                        System.out.println("Average age         : " + String.format("%.2f", avgAge));
+                    }
+                }
+            }
 
         } catch (SQLException e) {
             System.out.println(RED + "Database error: " + e.getMessage() + RESET);
+            }
         }
     }
-}
