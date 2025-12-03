@@ -246,35 +246,55 @@ public class AnimUtils
 
     }
 
-   public static void closingAnim() {
-      
-      String byeFrame = 
-         "   _____                 _ _               \n" +
-         "  / ____|               | | |              \n" +
-         " | |  __  ___   ___   __| | |__  _   _  ___ \n" +
-         " | | |_ |/ _ \\ / _ \\ / _` | '_ \\| | | |/ _ \\\n" +
-         " | |__| | (_) | (_) | (_| | |_) | |_| |  __/\n" +
-         "  \\_____|\\___/ \\___/ \\__,_|_.__/ \\__, |\\___|\n" +
-         "                                  __/ |     \n" +
-         "                                 |___/      ";
+   /**
+     * Kapanış animasyonu:
+     */
+    public static void closingAnim() {
+        // --- Kare 1: Kollar Sola Dönük (Disco Pose Left) ---
+        // Renkler: Mavi, Kırmızı, Sarı, Yeşil
+        String f1_head = BLUE + "   o/   " + RED + "   o/   " + YELLOW + "   o/   " + GREEN + "   o/   " + RESET;
+        String f1_body = BLUE + "  /|    " + RED + "  /|    " + YELLOW + "  /|    " + GREEN + "  /|    " + RESET;
+        String f1_legs = BLUE + "  / \\   " + RED + "  / \\   " + YELLOW + "  / \\   " + GREEN + "  / \\   " + RESET;
 
-      
-      String[] colors = new String[]{"\u001b[32m", "\u001b[33m", "\u001b[31m"};
+        // --- Kare 2: Kollar Sağa Dönük (Disco Pose Right) ---
+        // Renkler bir adım kayıyor: Yeşil, Mavi, Kırmızı, Sarı
+        String f2_head = GREEN + "   \\o   " + BLUE + "   \\o   " + RED + "   \\o   " + YELLOW + "   \\o   " + RESET;
+        String f2_body = GREEN + "    |\\  " + BLUE + "    |\\  " + RED + "    |\\  " + YELLOW + "    |\\  " + RESET;
+        String f2_legs = GREEN + "   / \\  " + BLUE + "   / \\  " + RED + "   / \\  " + YELLOW + "   / \\  " + RESET;
 
-      for (String color : colors) {
-         ConsoleUtils.clearScreen();
-         
-         System.out.println(color + byeFrame + "\u001b[0m");
-         
-         try {
-            Thread.sleep(600L); 
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-         }
-      }
-      
-      
-      ConsoleUtils.clearScreen();
-      System.out.println("System Halted.");
-   }
+        // --- Kare 3: Kollar Havada (Hands Up) ---
+        // Renkler yine kayıyor: Sarı, Yeşil, Mavi, Kırmızı
+        String f3_head = YELLOW + "   \\o/  " + GREEN + "   \\o/  " + BLUE + "   \\o/  " + RED + "   \\o/  " + RESET;
+        String f3_body = YELLOW + "    |   " + GREEN + "    |   " + BLUE + "    |   " + RED + "    |   " + RESET;
+        String f3_legs = YELLOW + "   / \\  " + GREEN + "   / \\  " + BLUE + "   / \\  " + RED + "   / \\  " + RESET;
+
+        // Üst Başlık
+        String banner = PURPLE + "\n\t.:. PARTY IS OVER - THANKS FOR COMING! .:.\n\n" + RESET;
+
+        // Animasyon Döngüsü (3 kez tekrar etsin)
+        for (int i = 0; i < 3; i++) {
+            // --- Frame 1 Oynat ---
+            clearScreen();
+            System.out.println(banner);
+            System.out.println(f1_head + "\n" + f1_body + "\n" + f1_legs);
+            try { Thread.sleep(300); } catch (InterruptedException e) {}
+
+            // --- Frame 2 Oynat ---
+            clearScreen();
+            System.out.println(banner);
+            System.out.println(f2_head + "\n" + f2_body + "\n" + f2_legs);
+            try { Thread.sleep(300); } catch (InterruptedException e) {}
+
+            // --- Frame 3 Oynat ---
+            clearScreen();
+            System.out.println(banner);
+            System.out.println(f3_head + "\n" + f3_body + "\n" + f3_legs);
+            try { Thread.sleep(300); } catch (InterruptedException e) {}
+        }
+
+        // Final Ekranı
+        clearScreen();
+        System.out.println(CYAN + "\n\n\t\tGoodbye! 👋\n" + RESET);
+        try { Thread.sleep(500); } catch (InterruptedException e) {}
+    }
 }
