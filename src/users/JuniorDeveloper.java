@@ -1,6 +1,7 @@
 package users;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.Scanner;
 import utils.*;
 import static utils.ConsoleUtils.*;
@@ -162,10 +163,10 @@ public class JuniorDeveloper extends Tester
             System.out.println("2. Middle Name");
             System.out.println("3. Last Name");
             System.out.println("4. Nickname");
-            System.out.println("5. Primary Phone");
-            System.out.println("6. Secondary Phone");
-            System.out.println("7. Email");
-            System.out.println("8. LinkedIn URL");
+            System.out.println("5. Primary Phone (max 10 digit)");
+            System.out.println("6. Secondary Phone  (max 10 digit)");
+            System.out.println("7. Email  (ssss@example.com)");
+            System.out.println("8. LinkedIn URL  (https://linkedin.com/in/example)");
             System.out.println("9. Birth Date (YYYY-MM-DD)");
             System.out.println("10. Cancel");
             System.out.print(CYAN + "Select: " + RESET);
@@ -205,6 +206,72 @@ public class JuniorDeveloper extends Tester
                 System.out.println(RED + "Value cannot be empty. Update cancelled." + RESET);
                 return;
             }
+
+
+            boolean valid = true;
+
+            if (fieldName.equals("first_name") || fieldName.equals("middle_name") ||
+                    fieldName.equals("last_name") || fieldName.equals("nickname"))
+            {
+                if (!newValue.matches("[a-zA-ZçğıöşüÇĞİÖŞÜ]+"))
+                {
+                    System.out.println(RED + "Invalid name. Only letters are allowed." + RESET);
+                    return;
+                }
+            }
+
+            if (fieldName.equals("phone_primary") || fieldName.equals("phone_secondary"))
+            {
+                if (!newValue.matches("\\d{10}"))
+                {
+                    System.out.println(RED + "Invalid phone number. Must be exactly 10 digits." + RESET);
+                    return;
+                }
+            }
+
+            if (fieldName.equals("email"))
+            {
+                if (!newValue.contains("@") || !newValue.contains("."))
+                {
+                    System.out.println(RED + "Invalid email format." + RESET);
+                    return;
+                }
+            }
+
+            if (fieldName.equals("linkedin_url"))
+            {
+                if (!newValue.toLowerCase().contains("linkedin.com"))
+                {
+                    System.out.println(RED + "Invalid LinkedIn URL. Must contain 'linkedin.com'." + RESET);
+                    return;
+                }
+            }
+
+            if (fieldName.equals("birth_date"))
+            {
+
+                if (!newValue.matches("\\d{4}-\\d{2}-\\d{2}"))
+                {
+                    System.out.println(RED + "Invalid date format. Use YYYY-MM-DD." + RESET);
+                    return;
+                }
+
+                try {
+                    LocalDate date = LocalDate.parse(newValue);
+
+
+                    if (date.isAfter(LocalDate.now())) {
+                        System.out.println(RED + "Birth date cannot be in the future." + RESET);
+                        return;
+                    }
+
+                } catch (Exception e) {
+                    System.out.println(RED + "Invalid date. Cannot parse date." + RESET);
+                    return;
+                }
+            }
+
+
 
             String query = "UPDATE contacts SET " + fieldName + "=?, updated_at=NOW() WHERE contact_id=?";
 
