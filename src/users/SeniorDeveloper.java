@@ -87,8 +87,7 @@ public class SeniorDeveloper extends JuniorDeveloper
 
                     case 7:
                         clearScreen();
-                        System.out.print(CYAN + "New Password: " + RESET);
-                        changePassword(sc.nextLine());
+                        changePasswordInteractive();
                         break;
                     case 0:
                         undoLastAction();

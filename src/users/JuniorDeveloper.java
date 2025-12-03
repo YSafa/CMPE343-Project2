@@ -82,9 +82,7 @@ public class JuniorDeveloper extends Tester
                         break;
                     case 5:
                         clearScreen();
-                        System.out.print(CYAN + "New Password: " + RESET);
-                        String newPass = sc.nextLine();
-                        changePassword(newPass);
+                        changePasswordInteractive();
                         break;
                     case 6:
                         break;

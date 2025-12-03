@@ -88,8 +88,8 @@ public class Group29
              PreparedStatement stmt = conn.prepareStatement(query))
         {
             stmt.setString(1, username);
-            //stmt.setString(2, PasswordUtils.hashPassword(password));
-            stmt.setString(2, password);
+            stmt.setString(2, PasswordUtils.hashPassword(password));
+            //stmt.setString(2, password);
 
             ResultSet rs = stmt.executeQuery();
             if (rs.next())

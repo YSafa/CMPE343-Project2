@@ -56,8 +56,7 @@ public class Tester extends User implements Searchable, Sortable
                         break;
                     case 4:
                         clearScreen();
-                        System.out.print("New Password: ");
-                        changePassword(sc.nextLine());
+                        changePasswordInteractive();
                         break;
                     case 5:
                         break;
@@ -158,14 +157,14 @@ public class Tester extends User implements Searchable, Sortable
                 case "1":
                     System.out.print(CYAN + "Enter first or middle name: " + RESET);
                     String name = sc.nextLine();
-                    query += "(LOWER(first_name) LIKE LOWER(?) OR LOWER(middle_name) LIKE LOWER(?))";
+                    query += "(LOWER(first_name COLLATE utf8mb4_bin) LIKE LOWER(?) OR LOWER(middle_name COLLATE utf8mb4_bin) LIKE LOWER(?))";
                     params.add("%" + name + "%");
                     params.add("%" + name + "%");
                     break;
                 case "2":
                     System.out.print(CYAN + "Enter last name: " + RESET);
                     String lName = sc.nextLine();
-                    query += "LOWER(last_name) LIKE LOWER(?)";
+                    query += "LOWER(last_name COLLATE utf8mb4_bin) LIKE LOWER(?)";
                     params.add("%" + lName + "%");
                     break;
                 case "3":
@@ -190,16 +189,16 @@ public class Tester extends User implements Searchable, Sortable
 
                     List<String> filters = new ArrayList<>();
                     if (!fn.isEmpty()) {
-                        filters.add("(LOWER(first_name) LIKE LOWER(?) OR LOWER(middle_name) LIKE LOWER(?))");
+                        filters.add("(LOWER(first_name COLLATE utf8mb4_bin) LIKE LOWER(?) OR LOWER(middle_name COLLATE utf8mb4_bin) LIKE LOWER(?))");
                         params.add("%" + fn + "%");
                         params.add("%" + fn + "%");
                     }
                     if (!ln.isEmpty()) {
-                        filters.add("LOWER(last_name) LIKE LOWER(?)");
+                        filters.add("LOWER(last_name COLLATE utf8mb4_bin) LIKE LOWER(?)");
                         params.add("%" + ln + "%");
                     }
                     if (!nn.isEmpty()) {
-                        filters.add("LOWER(nickname) LIKE LOWER(?)");
+                        filters.add("LOWER(nickname COLLATE utf8mb4_bin) LIKE LOWER(?)");
                         params.add("%" + nn + "%");
                     }
                     if (!ph.isEmpty()) {
@@ -208,7 +207,7 @@ public class Tester extends User implements Searchable, Sortable
                         params.add("%" + ph + "%");
                     }
                     if (!em.isEmpty()) {
-                        filters.add("LOWER(email) LIKE LOWER(?)");
+                        filters.add("LOWER(email COLLATE utf8mb4_bin) LIKE LOWER(?)");
                         params.add("%" + em + "%");
                     }
 

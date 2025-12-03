@@ -73,8 +73,7 @@ public class Manager extends SeniorDeveloper
 
                     case 6:
                         clearScreen();
-                        System.out.print(CYAN + "New Password: " + RESET);
-                        changePassword(sc.nextLine());
+                        changePasswordInteractive();
                         break;
 
                     case 7:
@@ -299,6 +298,14 @@ public class Manager extends SeniorDeveloper
              PreparedStatement stmt = conn.prepareStatement("DELETE FROM users WHERE user_id=?"))
         {
             int id = Integer.parseInt(sc.nextLine().trim());
+
+            // manager can't delete itself
+            if (id == this.id)
+            {
+                System.out.println(RED + "You cannot delete your own account!" + RESET);
+                return;
+            }
+
             System.out.print(RED + "Are you sure? (y/n): " + RESET);
             if (!sc.nextLine().trim().equalsIgnoreCase("y")) {
                 System.out.println(YELLOW + "Cancelled." + RESET);
