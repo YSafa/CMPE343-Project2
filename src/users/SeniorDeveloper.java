@@ -41,6 +41,7 @@ public class SeniorDeveloper extends JuniorDeveloper
 
                 System.out.println("7. Change Password");
                 System.out.println("8. Logout");
+                System.out.println(YELLOW + "0. Undo Last Action" + ConsoleUtils.RESET);
                 System.out.print(CYAN + "Select: " + RESET);
 
                 String input = sc.nextLine().trim();
@@ -89,11 +90,13 @@ public class SeniorDeveloper extends JuniorDeveloper
                         System.out.print(CYAN + "New Password: " + RESET);
                         changePassword(sc.nextLine());
                         break;
-
+                    case 0:
+                        undoLastAction();
+                        pause();
+                        break;
                     case 8:
                         // logout
                         break;
-
                     default:
                         System.out.println(RED + "Invalid choice!" + RESET);
                         pause();
@@ -275,7 +278,37 @@ public class SeniorDeveloper extends JuniorDeveloper
                 System.out.println(YELLOW + "Cancelled." + RESET);
                 return;
             }
+            try (Connection connBackup = DBUtils.connect();
+            PreparedStatement stmtBackup = connBackup.prepareStatement("SELECT * FROM contacts WHERE contact_id=?")) {
+            stmtBackup.setInt(1, id); 
+            ResultSet rsBackup = stmtBackup.executeQuery();
+    
+        if (rsBackup.next()) {
+            String fn = rsBackup.getString("first_name");
+            String mn = rsBackup.getString("middle_name");
+            String ln = rsBackup.getString("last_name");
+            String nk = rsBackup.getString("nickname");
+            String p1 = rsBackup.getString("phone_primary");
+            String p2 = rsBackup.getString("phone_secondary");
+            String em = rsBackup.getString("email");
+            String li = rsBackup.getString("linkedin_url");
+            java.sql.Date bd = rsBackup.getDate("birth_date");
 
+            String mnSql = (mn == null) ? "NULL" : "'" + mn + "'";
+            String p2Sql = (p2 == null) ? "NULL" : "'" + p2 + "'";
+            String liSql = (li == null) ? "NULL" : "'" + li + "'";
+            String bdSql = (bd == null) ? "NULL" : "'" + bd.toString() + "'";
+
+            String restoreSql = String.format(
+                        "INSERT INTO contacts (contact_id, first_name, middle_name, last_name, nickname, phone_primary, phone_secondary, email, linkedin_url, birth_date, created_at, updated_at) " +
+                        "VALUES (%d, '%s', %s, '%s', '%s', '%s', %s, '%s', %s, %s, NOW(), NOW())",
+                        id, fn, mnSql, ln, nk, p1, p2Sql, em, liSql, bdSql
+                    );
+        undoStack.push(restoreSql);
+    }
+} catch (Exception e) {
+    System.out.println("Undo backup error: " + e.getMessage());
+}
             try (Connection conn = DBUtils.connect();
                  PreparedStatement stmt = conn.prepareStatement("DELETE FROM contacts WHERE contact_id=?"))
             {

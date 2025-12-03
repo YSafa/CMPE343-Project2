@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.Scanner;
 import utils.*;
 import static utils.ConsoleUtils.*;
+import java.util.Stack;
 
 /**
  * Represents a Junior Developer user with Tester permissions.
@@ -12,6 +13,26 @@ import static utils.ConsoleUtils.*;
  */
 public class JuniorDeveloper extends Tester
 {
+    // --- BURAYI 14. ve 15. SATIRIN ARASINA YAPIŞTIR ---
+    protected static java.util.Stack<String> undoStack = new java.util.Stack<>();
+
+    protected void undoLastAction() {
+        if (undoStack.isEmpty()) {
+            System.out.println(ConsoleUtils.RED + "Nothing to undo!" + ConsoleUtils.RESET);
+            return;
+        }
+        String sql = undoStack.pop();
+        try (Connection conn = DBUtils.connect();
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(sql);
+            System.out.println(ConsoleUtils.GREEN + "Undo successful! Last action reverted." + ConsoleUtils.RESET);
+        } catch (SQLException e) {
+            System.out.println(ConsoleUtils.RED + "Undo failed: " + e.getMessage() + ConsoleUtils.RESET);
+            undoStack.push(sql); 
+        }
+    }
+    // --------------------------------------------------
+
     public JuniorDeveloper(ResultSet rs) throws SQLException { super(rs); }
 
     /**
@@ -35,6 +56,7 @@ public class JuniorDeveloper extends Tester
                 System.out.println("4. Update Contact");
                 System.out.println("5. Change Password");
                 System.out.println("6. Logout");
+                System.out.println(RED + "0. Undo Last Action" + ConsoleUtils.RESET);
                 System.out.print(CYAN + "Select: " + RESET);
 
                 String input = sc.nextLine().trim();
@@ -65,6 +87,10 @@ public class JuniorDeveloper extends Tester
                         changePassword(newPass);
                         break;
                     case 6:
+                        break;
+                    case 0:
+                        undoLastAction();
+                        pause();
                         break;
                     default:
                         System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
@@ -271,7 +297,20 @@ public class JuniorDeveloper extends Tester
                 }
             }
 
+            String oldValue = "";
+            try (Connection connOld = DBUtils.connect();
+                 PreparedStatement stmtOld = connOld.prepareStatement("SELECT " + fieldName + " FROM contacts WHERE contact_id=?")) {
+                stmtOld.setInt(1, contactId);
+                ResultSet rsOld = stmtOld.executeQuery();
+                if (rsOld.next()) {
+                    oldValue = rsOld.getString(1);
+                    if (oldValue == null) oldValue = "";
+                }
+            }
 
+            String undoQuery = String.format("UPDATE contacts SET %s='%s', updated_at=NOW() WHERE contact_id=%d", 
+                                              fieldName, oldValue, contactId);
+            undoStack.push(undoQuery);
 
             String query = "UPDATE contacts SET " + fieldName + "=?, updated_at=NOW() WHERE contact_id=?";
 
