@@ -13,7 +13,7 @@ import java.util.Stack;
  */
 public class JuniorDeveloper extends Tester
 {
-    // --- BURAYI 14. ve 15. SATIRIN ARASINA YAPIŞTIR ---
+
     protected static java.util.Stack<String> undoStack = new java.util.Stack<>();
 
     protected void undoLastAction() {
@@ -56,7 +56,7 @@ public class JuniorDeveloper extends Tester
                 System.out.println("4. Update Contact");
                 System.out.println("5. Change Password");
                 System.out.println("6. Logout");
-                System.out.println(RED + "0. Undo Last Action" + ConsoleUtils.RESET);
+                System.out.println(YELLOW + "0. Undo Last Action (Update Contact)" + RESET);
                 System.out.print(CYAN + "Select: " + RESET);
 
                 String input = sc.nextLine().trim();
@@ -135,14 +135,24 @@ public class JuniorDeveloper extends Tester
 
             try (Connection conn = DBUtils.connect();
                  Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery("SELECT contact_id, first_name, last_name FROM contacts"))
+                 ResultSet rs = stmt.executeQuery("SELECT contact_id, first_name, middle_name, last_name, phone_primary FROM contacts ORDER BY contact_id"))
             {
                 while (rs.next())
                 {
-                    System.out.printf("[%d] %s %s\n",
-                            rs.getInt("contact_id"),
-                            rs.getString("first_name"),
-                            rs.getString("last_name"));
+                    int id = rs.getInt("contact_id");
+                    String first = rs.getString("first_name");
+                    String middle = rs.getString("middle_name");
+                    String last = rs.getString("last_name");
+                    String phone = rs.getString("phone_primary");
+
+                    System.out.printf(
+                            "%s[%03d]%s  %s%-12s%s %s%-12s%s %s%-12s%s  %s📞%s %s\n",
+                            YELLOW, id, RESET,
+                            BRIGHT_PURPLE, first, RESET,
+                            BRIGHT_PURPLE, (middle != null ? middle : ""), RESET,
+                            BRIGHT_PURPLE, (last != null ? last : ""), RESET,
+                            BLUE, RESET, (phone != null ? phone : "N/A")
+                    );
                 }
             }
 
@@ -182,6 +192,7 @@ public class JuniorDeveloper extends Tester
             System.out.println(GREEN + "Contact ID confirmed." + RESET);
 
             // ========== FIELD SELECTION ==========
+            clearScreen();
             System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
             System.out.println(YELLOW + "Select the field to update:" + RESET);
             System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);

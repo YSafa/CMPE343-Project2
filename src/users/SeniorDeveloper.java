@@ -41,7 +41,7 @@ public class SeniorDeveloper extends JuniorDeveloper
 
                 System.out.println("7. Change Password");
                 System.out.println("8. Logout");
-                System.out.println(YELLOW + "0. Undo Last Action" + ConsoleUtils.RESET);
+                System.out.println(YELLOW + "0. Undo Last Action (Update Contact and Delete Contact)" + RESET);
                 System.out.print(CYAN + "Select: " + RESET);
 
                 String input = sc.nextLine().trim();
