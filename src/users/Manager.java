@@ -158,9 +158,31 @@ public class Manager extends SeniorDeveloper
             System.out.print(CYAN + "Last Name: " + RESET);
             String ln = sc.nextLine().trim();
 
-            System.out.println(GRAY + "Valid roles: TESTER, JUNIOR_DEV, SENIOR_DEV, MANAGER" + RESET);
-            System.out.print(CYAN + "Role: " + RESET);
-            String r = sc.nextLine().trim();
+            String r = "";
+            while (true)
+            {
+                System.out.println(GRAY + "Select Role:" + RESET);
+                System.out.println("1) TESTER");
+                System.out.println("2) JUNIOR_DEV");
+                System.out.println("3) SENIOR_DEV");
+                System.out.println("4) MANAGER");
+                System.out.print(CYAN + "Select (1-4): " + RESET);
+
+                String roleChoice = sc.nextLine().trim();
+
+                switch (roleChoice)
+                {
+                    case "1": r = "TESTER"; break;
+                    case "2": r = "JUNIOR_DEV"; break;
+                    case "3": r = "SENIOR_DEV"; break;
+                    case "4": r = "MANAGER"; break;
+                    default:
+                        System.out.println(RED + "Invalid choice! Please select 1–4." + RESET);
+                        continue;
+                }
+                break;
+            }
+
 
             if (newUsername.isEmpty() || newPassword.isEmpty() || fn.isEmpty() || ln.isEmpty() || r.isEmpty()) {
                 System.out.println(RED + "All fields are required. User not added." + RESET);
