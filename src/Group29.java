@@ -71,7 +71,7 @@ public class Group29
             }
         }
 
-        System.out.println(ConsoleUtils.GREEN + "\nGoodbye 👋" + ConsoleUtils.RESET);
+        AnimUtils.closingAnim();
     }
 
     /**

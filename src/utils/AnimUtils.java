@@ -246,9 +246,35 @@ public class AnimUtils
 
     }
 
-    public static void closingAnim()
-    {
+   public static void closingAnim() {
+      
+      String byeFrame = 
+         "   _____                 _ _               \n" +
+         "  / ____|               | | |              \n" +
+         " | |  __  ___   ___   __| | |__  _   _  ___ \n" +
+         " | | |_ |/ _ \\ / _ \\ / _` | '_ \\| | | |/ _ \\\n" +
+         " | |__| | (_) | (_) | (_| | |_) | |_| |  __/\n" +
+         "  \\_____|\\___/ \\___/ \\__,_|_.__/ \\__, |\\___|\n" +
+         "                                  __/ |     \n" +
+         "                                 |___/      ";
 
-    }
+      
+      String[] colors = new String[]{"\u001b[32m", "\u001b[33m", "\u001b[31m"};
 
+      for (String color : colors) {
+         ConsoleUtils.clearScreen();
+         
+         System.out.println(color + byeFrame + "\u001b[0m");
+         
+         try {
+            Thread.sleep(600L); 
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+      }
+      
+      
+      ConsoleUtils.clearScreen();
+      System.out.println("System Halted.");
+   }
 }
