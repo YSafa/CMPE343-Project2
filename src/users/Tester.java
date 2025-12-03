@@ -176,7 +176,7 @@ public class Tester extends User implements Searchable, Sortable
                     params.add("%" + phone + "%");
                     break;
                 case "4":
-                    System.out.println(YELLOW + "Multi-field search:" + RESET);
+                    System.out.println(YELLOW + "Multi-field search (If you don't want to search by a field, leave it blank.)" + RESET);
                     System.out.print(CYAN + "First or Middle Name: " + RESET);
                     String fn = sc.nextLine().trim();
                     System.out.print(CYAN + "Last Name: " + RESET);

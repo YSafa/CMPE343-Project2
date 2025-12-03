@@ -247,7 +247,7 @@ public class AnimUtils
     }
 
    /**
-     * Kapanış animasyonu:
+     * Displays an ASCII-art-based closing animation when the program ended.
      */
     public static void closingAnim() {
         // --- Kare 1: Kollar Sola Dönük (Disco Pose Left) ---
