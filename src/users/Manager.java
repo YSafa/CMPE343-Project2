@@ -7,14 +7,21 @@ import static utils.ConsoleUtils.*;
 import static utils.PasswordUtils.*;
 
 /**
- * Represents a Manager user with administrative privileges.
+ * Manager user role can manage system users and view contact statistics.
  */
 public class Manager extends SeniorDeveloper
 {
+    /**
+     * Creates a Manager user using database data.
+     *
+     * @param rs ResultSet containing the user's row information
+     * @throws SQLException if reading column values fails
+     */
     public Manager(ResultSet rs) throws SQLException { super(rs); }
 
     /**
-     * Displays the Manager-specific menu.
+     * Shows the Manager menu and performs actions based on user selection.
+     * Loops until the user selects Logout.
      */
     @Override
     public void displayMenu()
@@ -96,7 +103,7 @@ public class Manager extends SeniorDeveloper
     }
 
     /**
-     * Lists all users from users table.
+     * Lists all users stored in the database and prints them on screen.
      */
     private void listUsers()
     {
@@ -136,7 +143,10 @@ public class Manager extends SeniorDeveloper
     }
 
     /**
-     * Adds a new user.
+     * Adds a new user to the system.
+     * Reads user information from console and inserts it into the database.
+     *
+     * @param sc Scanner used for reading input
      */
     private void addUser(Scanner sc)
     {
@@ -216,7 +226,11 @@ public class Manager extends SeniorDeveloper
     }
 
     /**
-     * Updates an existing user.
+     * Updates an existing user's information.
+     * Empty fields keep their old values.
+     * Role selection is validated using a numeric menu.
+     *
+     * @param sc Scanner used for reading input
      */
     private void updateUser(Scanner sc)
     {
@@ -263,7 +277,6 @@ public class Manager extends SeniorDeveloper
 
                     String roleInput = sc.nextLine().trim();
 
-                    // ENTER → mevcut rol kalsın
                     if (roleInput.isEmpty()) {
                         newRole = currentRole;
                         break;
@@ -277,10 +290,8 @@ public class Manager extends SeniorDeveloper
 
                         default:
                             System.out.println(RED + "Invalid role! Please select 1–4 or press Enter." + RESET);
-                            continue;  // tekrar sor
+                            continue;
                     }
-
-                    // doğru seçim yapıldı → döngüden çık
                     break;
                 }
 
@@ -317,7 +328,10 @@ public class Manager extends SeniorDeveloper
     }
 
     /**
-     * Deletes a user.
+     * Deletes a user by user_id.
+     * A Manager cannot delete their own account.
+     *
+     * @param sc Scanner used for reading input
      */
     private void deleteUser(Scanner sc)
     {
@@ -354,7 +368,8 @@ public class Manager extends SeniorDeveloper
     }
 
     /**
-     * Shows basic statistics about contacts table.
+     * Displays contact-related statistics such as total count, LinkedIn usage,
+     * oldest and youngest birth dates, and average age.
      */
     private void showContactStats()
     {
