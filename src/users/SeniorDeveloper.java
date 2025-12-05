@@ -171,8 +171,7 @@ public class SeniorDeveloper extends JuniorDeveloper
         if (phoneSecondary == null || phoneSecondary.isEmpty())
         {
             phoneSecondary = null;
-        }
-        // Boş değil ama 10 haneli değilse hata ver
+        }// Boş değil ama 10 haneli değilse hata ver
         else if (!phoneSecondary.matches("\\d{10}"))
         {
             System.out.println(RED + "Invalid secondary phone number! Must be 10 digits." + RESET);
@@ -193,12 +192,17 @@ public class SeniorDeveloper extends JuniorDeveloper
 
         System.out.print(CYAN + "LinkedIn URL (Optional, must contain 'linkedin.com' if entered): " + RESET);
         String linkedin = sc.nextLine().trim();
-        if (!linkedin.isEmpty() && !linkedin.toLowerCase().contains("linkedin.com"))
+
+        // Eğer boşsa direkt null yap
+        if (linkedin == null || linkedin.isEmpty())
+        {
+            linkedin = null;
+        }// Boş değilse doğruluğunu kontrol et
+        else if (!linkedin.toLowerCase().contains("linkedin.com"))
         {
             System.out.println(RED + "Invalid LinkedIn URL! Must contain 'linkedin.com'." + RESET);
             linkedin = null;
         }
-        if (linkedin.isEmpty()) linkedin = null;
 
         LocalDate birthDate = null;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
