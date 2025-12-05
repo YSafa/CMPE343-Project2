@@ -251,13 +251,44 @@ public class Manager extends SeniorDeveloper
                 String newFirst = sc.nextLine().trim();
                 System.out.print(CYAN + "New Last Name (" + currentLast + "): " + RESET);
                 String newLast = sc.nextLine().trim();
-                System.out.print(CYAN + "New Role (" + currentRole + "): " + RESET);
-                String newRole = sc.nextLine().trim();
+                String newRole = null;
+
+                while (true) {
+                    System.out.println(GRAY + "Select New Role (leave blank to keep current)" + RESET);
+                    System.out.println("1) TESTER");
+                    System.out.println("2) JUNIOR_DEV");
+                    System.out.println("3) SENIOR_DEV");
+                    System.out.println("4) MANAGER");
+                    System.out.print(CYAN + "Select (1-4) or press Enter to keep (" + currentRole + "): " + RESET);
+
+                    String roleInput = sc.nextLine().trim();
+
+                    // ENTER → mevcut rol kalsın
+                    if (roleInput.isEmpty()) {
+                        newRole = currentRole;
+                        break;
+                    }
+
+                    switch (roleInput) {
+                        case "1": newRole = "TESTER"; break;
+                        case "2": newRole = "JUNIOR_DEV"; break;
+                        case "3": newRole = "SENIOR_DEV"; break;
+                        case "4": newRole = "MANAGER"; break;
+
+                        default:
+                            System.out.println(RED + "Invalid role! Please select 1–4 or press Enter." + RESET);
+                            continue;  // tekrar sor
+                    }
+
+                    // doğru seçim yapıldı → döngüden çık
+                    break;
+                }
+
+
 
                 if (newUsername.isEmpty()) newUsername = currentUsername;
                 if (newFirst.isEmpty()) newFirst = currentFirst;
                 if (newLast.isEmpty()) newLast = currentLast;
-                if (newRole.isEmpty()) newRole = currentRole;
 
                 StringBuilder sql = new StringBuilder(
                         "UPDATE users SET username=?, first_name=?, last_name=?, role=?, updated_at=NOW()");
