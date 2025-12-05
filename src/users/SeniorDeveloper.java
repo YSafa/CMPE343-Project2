@@ -166,12 +166,18 @@ public class SeniorDeveloper extends JuniorDeveloper
 
         System.out.print(CYAN + "Secondary Phone (Optional, 10 digits): " + RESET);
         String phoneSecondary = sc.nextLine().trim();
-        if (!phoneSecondary.isEmpty() && !phoneSecondary.matches("\\d{10}"))
+
+        // Eğer boş girildiyse null yap
+        if (phoneSecondary == null || phoneSecondary.isEmpty())
+        {
+            phoneSecondary = null;
+        }
+        // Boş değil ama 10 haneli değilse hata ver
+        else if (!phoneSecondary.matches("\\d{10}"))
         {
             System.out.println(RED + "Invalid secondary phone number! Must be 10 digits." + RESET);
             phoneSecondary = null;
         }
-        if (phoneSecondary.isEmpty()) phoneSecondary = null;
 
         String email;
         do
