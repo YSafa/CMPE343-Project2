@@ -9,7 +9,7 @@ import utils.*;
 import static utils.ConsoleUtils.*;
 
 /**
- * Represents a Senior Developer user with extended privileges: ADD & DELETE.
+ * Represents a Senior Developer user with extended privileges: ADD &amp; DELETE.
  */
 public class SeniorDeveloper extends JuniorDeveloper
 {
