@@ -8,14 +8,18 @@ import static utils.ConsoleUtils.*;
 import java.util.Stack;
 
 /**
- * Represents a Junior Developer user with Tester permissions.
- * Can update existing contacts in the database.
+ * Junior Developer role. Has Tester permissions and can update contacts.
+ * Supports undo for the last update action.
  */
 public class JuniorDeveloper extends Tester
 {
-
+    /** Stores SQL queries for undoing the last update action. */
     protected static java.util.Stack<String> undoStack = new java.util.Stack<>();
 
+    /**
+     * Reverts the last contact update by executing the stored undo SQL query.
+     * If no action is available, shows an error message.
+     */
     protected void undoLastAction() {
         if (undoStack.isEmpty()) {
             System.out.println(ConsoleUtils.RED + "Nothing to undo!" + ConsoleUtils.RESET);
@@ -31,13 +35,18 @@ public class JuniorDeveloper extends Tester
             undoStack.push(sql); 
         }
     }
-    // --------------------------------------------------
 
+    /**
+     * Creates a Junior Developer user from a database row.
+     *
+     * @param rs ResultSet containing user information
+     * @throws SQLException if reading data fails
+     */
     public JuniorDeveloper(ResultSet rs) throws SQLException { super(rs); }
 
     /**
-     * Displays the Junior Developer menu and handles user selections.
-     * Extends Tester menu with Update Contact permission.
+     * Displays the Junior Developer menu.
+     * Includes all Tester actions plus Update Contact and Undo.
      */
     @Override
     public void displayMenu()
@@ -118,7 +127,9 @@ public class JuniorDeveloper extends Tester
     }
 
     /**
-     * Updates an existing contact in the database.
+     * Updates a selected contact in the database.
+     * Allows changing fields like name, phone, email, and birth date.
+     * Validates user input and supports undo for the last update.
      */
     public void updateContact()
     {
