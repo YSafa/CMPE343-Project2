@@ -231,6 +231,29 @@ public class JuniorDeveloper extends Tester
             }
 
             System.out.println(GREEN + "Field selected: " + fieldLabel + RESET);
+            // ===================================================
+            //        LOAD OLD VALUE AND SHOW IT TO USER
+            // ===================================================
+
+            String oldValue = "";
+            try (Connection connOld = DBUtils.connect();
+                 PreparedStatement stmtOld = connOld.prepareStatement(
+                         "SELECT " + fieldName + " FROM contacts WHERE contact_id=?"))
+            {
+                stmtOld.setInt(1, contactId);
+                ResultSet rsOld = stmtOld.executeQuery();
+                if (rsOld.next())
+                {
+                    oldValue = rsOld.getString(1);
+                    if (oldValue == null) oldValue = "";
+                }
+            }
+            // Eski değeri ekranda göster
+            System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+            System.out.println(YELLOW + "Current " + fieldLabel + ": " + RESET + BRIGHT_PURPLE + oldValue + RESET);
+            System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+
+
 
             System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
             System.out.print(CYAN + "Enter new " + fieldLabel + ": " + RESET);
@@ -243,7 +266,6 @@ public class JuniorDeveloper extends Tester
             }
 
 
-            boolean valid = true;
 
             if (fieldName.equals("first_name") || fieldName.equals("middle_name") ||
                     fieldName.equals("last_name") || fieldName.equals("nickname"))
@@ -305,21 +327,18 @@ public class JuniorDeveloper extends Tester
                     return;
                 }
             }
+            // ===================================================
+            //               UNDO QUERY SAVE
+            // ===================================================
 
-            String oldValue = "";
-            try (Connection connOld = DBUtils.connect();
-                 PreparedStatement stmtOld = connOld.prepareStatement("SELECT " + fieldName + " FROM contacts WHERE contact_id=?")) {
-                stmtOld.setInt(1, contactId);
-                ResultSet rsOld = stmtOld.executeQuery();
-                if (rsOld.next()) {
-                    oldValue = rsOld.getString(1);
-                    if (oldValue == null) oldValue = "";
-                }
-            }
-
-            String undoQuery = String.format("UPDATE contacts SET %s='%s', updated_at=NOW() WHERE contact_id=%d", 
-                                              fieldName, oldValue, contactId);
+            String undoQuery = String.format(
+                    "UPDATE contacts SET %s='%s', updated_at=NOW() WHERE contact_id=%d",
+                    fieldName, oldValue, contactId
+            );
             undoStack.push(undoQuery);
+            // ===================================================
+            //               UPDATE QUERY EXECUTION
+            // ===================================================
 
             String query = "UPDATE contacts SET " + fieldName + "=?, updated_at=NOW() WHERE contact_id=?";
 
@@ -334,14 +353,15 @@ public class JuniorDeveloper extends Tester
                 if (rows > 0)
                 {
                     System.out.println(GREEN + "Contact updated successfully." + RESET);
+
                     try (Connection conn2 = DBUtils.connect();
                          PreparedStatement stmt2 = conn2.prepareStatement("SELECT * FROM contacts WHERE contact_id=?"))
                     {
                         stmt2.setInt(1, contactId);
                         ResultSet rs2 = stmt2.executeQuery();
-                        if (rs2.next()) {
+
+                        if (rs2.next())
                             displaySingleContact(rs2);
-                        }
                     }
                     catch (Exception e)
                     {
@@ -363,5 +383,5 @@ public class JuniorDeveloper extends Tester
         {
             System.out.println(RED + "Error in updateContact: " + e.getMessage() + RESET);
         }
-    }
-}
+
+   }
