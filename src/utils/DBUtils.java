@@ -9,7 +9,8 @@ import java.sql.*;
  * Utility class for managing MySQL database connections.
  * Ensures a single, centralized way to connect and close JDBC connections.
  */
-public final class DBUtils {
+public final class DBUtils
+{
 
     // Prevent instantiation
     private DBUtils() {}
@@ -19,12 +20,13 @@ public final class DBUtils {
     /** Database username */
     public static final String USER = "myuser";
     /** Database password */
-    public static final String PASS = "1234"; // Change according to your MySQL setup
+    public static final String PASS = "1234";
 
     /**
      * Establishes a new database connection.
      */
-    public static Connection connect() {
+    public static Connection connect()
+    {
         try {
             return DriverManager.getConnection(DB_URL, USER, PASS);
         } catch (SQLException e) {
@@ -32,6 +34,5 @@ public final class DBUtils {
             return null;
         }
     }
-
 
 }

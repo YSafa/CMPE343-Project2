@@ -41,7 +41,7 @@ public class SeniorDeveloper extends JuniorDeveloper
 
                 System.out.println("7. Change Password");
                 System.out.println("8. Logout");
-                System.out.println(YELLOW + "0. Undo Last Action (Update Contact and Delete Contact)" + RESET);
+                System.out.println(YELLOW + "0. Undo Last Action (Add / Update / Delete Contact)" + RESET);
                 System.out.print(CYAN + "Select: " + RESET);
 
                 String input = sc.nextLine().trim();
@@ -242,9 +242,27 @@ public class SeniorDeveloper extends JuniorDeveloper
 
             int rows = stmt.executeUpdate();
             if (rows > 0)
+            {
                 System.out.println(GREEN + "Contact added successfully!" + RESET);
-            else
+
+                // ===== UNDO QUERY SAVE =====
+                try (Statement st = conn.createStatement();
+                     ResultSet rs = st.executeQuery("SELECT LAST_INSERT_ID() AS id")) {
+
+                    if (rs.next()) {
+                        int newId = rs.getInt("id");
+                        String undoDelete = "DELETE FROM contacts WHERE contact_id=" + newId;
+                        undoStack.push(undoDelete);
+                    }
+
+                } catch (SQLException e) {
+                    System.out.println(RED + "Failed to record undo for add contact: " + e.getMessage() + RESET);
+                }
+
+            } else {
                 System.out.println(RED + "Failed to add contact." + RESET);
+            }
+
         }
         catch (SQLException e)
         {
@@ -324,4 +342,79 @@ public class SeniorDeveloper extends JuniorDeveloper
             System.out.println(RED + "Invalid input or error: " + e.getMessage() + RESET);
         }
     }
+
+    /**
+     * Undo the last contact action (add, update, or delete).
+     * Uses the stored SQL command to restore the previous state.
+     * Shows which type of action was reverted.
+     */
+    @Override
+    protected void undoLastAction()
+    {
+        if (undoStack.isEmpty())
+        {
+            System.out.println(RED + "No contact action to undo!" + RESET);
+            return;
+        }
+
+        String sql = undoStack.pop();
+
+        String actionType;
+        if (sql.trim().toUpperCase().startsWith("DELETE")) {
+            actionType = "ADD";
+        } else if (sql.trim().toUpperCase().startsWith("INSERT")) {
+            actionType = "DELETE";
+        } else if (sql.trim().toUpperCase().startsWith("UPDATE")) {
+            actionType = "UPDATE";
+        } else {
+            actionType = "UNKNOWN";
+        }
+
+        try (Connection conn = DBUtils.connect();
+             Statement stmt = conn.createStatement())
+        {
+
+            int affected = stmt.executeUpdate(sql);
+
+            if (affected > 0)
+            {
+                System.out.println(GREEN + "Undo successful! (Reverted: " + actionType + ")" + RESET);
+
+                // Gösterilecek kişi bilgisi (varsa)
+                try (ResultSet rs = stmt.executeQuery("SELECT * FROM contacts ORDER BY updated_at DESC, created_at DESC LIMIT 1"))
+                {
+                    if (rs.next())
+                    {
+                        String name = rs.getString("first_name") + " " +
+                                (rs.getString("middle_name") != null ? rs.getString("middle_name") + " " : "") +
+                                rs.getString("last_name");
+                        String nick = rs.getString("nickname");
+
+                        switch (actionType)
+                        {
+                            case "ADD":
+                                System.out.printf(RED + "Removed Contact" + RESET);
+                                break;
+                            case "DELETE":
+                                System.out.printf(BLUE + "Restored Contact: %s (%s)%n" + RESET, name.trim(), nick);
+                                break;
+                            case "UPDATE":
+                                System.out.printf(YELLOW + "Reverted Contact: %s (%s)%n" + RESET, name.trim(), nick);
+                                break;
+                            default:
+                                System.out.printf(GRAY + "Affected Contact: %s (%s)%n" + RESET, name.trim(), nick);
+                        }
+                    }
+                }
+            } else {
+                System.out.println(YELLOW + "Undo executed, but no rows were affected." + RESET);
+            }
+
+        } catch (SQLException e) {
+            System.out.println(RED + "Undo failed: " + e.getMessage() + RESET);
+            undoStack.push(sql); // hata olursa geri koy
+        }
+    }
+
+
 }

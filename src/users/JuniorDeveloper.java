@@ -338,18 +338,16 @@ public class JuniorDeveloper extends Tester
                     return;
                 }
             }
-            // ===================================================
+
             //               UNDO QUERY SAVE
-            // ===================================================
 
             String undoQuery = String.format(
                     "UPDATE contacts SET %s='%s', updated_at=NOW() WHERE contact_id=%d",
                     fieldName, oldValue, contactId
             );
             undoStack.push(undoQuery);
-            // ===================================================
+
             //               UPDATE QUERY EXECUTION
-            // ===================================================
 
             String query = "UPDATE contacts SET " + fieldName + "=?, updated_at=NOW() WHERE contact_id=?";
 

@@ -2,6 +2,7 @@ package users;
 
 import java.sql.*;
 import java.util.Scanner;
+import java.util.Stack;
 import utils.*;
 import static utils.ConsoleUtils.*;
 import static utils.PasswordUtils.*;
@@ -11,6 +12,11 @@ import static utils.PasswordUtils.*;
  */
 public class Manager extends SeniorDeveloper
 {
+    /**
+     * Keeps SQL undo commands for restoring previous user data.
+     */
+    protected static Stack<String> undoStack = new Stack<>();
+
     /**
      * Creates a Manager user using database data.
      *
@@ -41,6 +47,7 @@ public class Manager extends SeniorDeveloper
                 System.out.println("5. Delete User");
                 System.out.println("6. Change My Password");
                 System.out.println("7. Logout");
+                System.out.println(YELLOW + "0. Undo Last Action (Add / Update / Delete User)" + RESET);
                 System.out.print(CYAN + "Select: " + RESET);
 
                 String input = sc.nextLine().trim();
@@ -85,6 +92,12 @@ public class Manager extends SeniorDeveloper
 
                     case 7:
                         // logout
+                        break;
+
+                    case 0:
+                        clearScreen();
+                        undoLastUserAction();
+                        pause();
                         break;
 
                     default:
@@ -214,9 +227,27 @@ public class Manager extends SeniorDeveloper
 
                 int affected = stmt.executeUpdate();
                 if (affected > 0)
+                {
                     System.out.println(GREEN + "User added successfully." + RESET);
-                else
+
+                    // ===== UNDO QUERY SAVE =====
+                    // Get the ID of the newly added user
+                    try (Statement st = conn.createStatement();
+                         ResultSet rs = st.executeQuery("SELECT LAST_INSERT_ID() AS id")) {
+                        if (rs.next())
+                        {
+                            int newId = rs.getInt("id");
+                            String undoDelete = "DELETE FROM users WHERE user_id=" + newId;
+                            undoStack.push(undoDelete);
+                        }
+                    } catch (SQLException e) {
+                        System.out.println(RED + "Failed to record undo for add operation: " + e.getMessage() + RESET);
+                    }
+
+                } else {
                     System.out.println(RED + "User could not be added." + RESET);
+                }
+
 
             }
 
@@ -255,6 +286,9 @@ public class Manager extends SeniorDeveloper
                 String currentFirst = rs.getString("first_name");
                 String currentLast = rs.getString("last_name");
                 String currentRole = rs.getString("role");
+
+                String currentHash = rs.getString("password_hash");
+
 
                 System.out.println(YELLOW + "Leave blank to keep current value." + RESET);
                 System.out.print(CYAN + "New Username (" + currentUsername + "): " + RESET);
@@ -300,6 +334,14 @@ public class Manager extends SeniorDeveloper
                 if (newUsername.isEmpty()) newUsername = currentUsername;
                 if (newFirst.isEmpty()) newFirst = currentFirst;
                 if (newLast.isEmpty()) newLast = currentLast;
+
+                // ===== UNDO QUERY SAVE =====
+                String undoQuery = String.format(
+                        "UPDATE users SET username='%s', first_name='%s', last_name='%s', role='%s', password_hash='%s', updated_at=NOW() WHERE user_id=%d",
+                        currentUsername, currentFirst, currentLast, currentRole, currentHash, uid
+                );
+                undoStack.push(undoQuery);
+
 
                 StringBuilder sql = new StringBuilder(
                         "UPDATE users SET username=?, first_name=?, last_name=?, role=?, updated_at=NOW()");
@@ -357,6 +399,29 @@ public class Manager extends SeniorDeveloper
                 return;
             }
 
+            // ===== UNDO QUERY SAVE (DELETE REVERSE) =====
+            String backupSql = String.format(
+                    "SELECT * FROM users WHERE user_id=%d", id
+            );
+            try (Statement backupStmt = conn.createStatement();
+                 ResultSet rs = backupStmt.executeQuery(backupSql)) {
+                if (rs.next()) {
+                    String undoInsert = String.format(
+                            "INSERT INTO users (user_id, username, password_hash, first_name, last_name, role, created_at, updated_at) " +
+                                    "VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
+                            rs.getInt("user_id"),
+                            rs.getString("username").replace("'", "''"),
+                            rs.getString("password_hash").replace("'", "''"),
+                            rs.getString("first_name").replace("'", "''"),
+                            rs.getString("last_name").replace("'", "''"),
+                            rs.getString("role"),
+                            rs.getString("created_at"),
+                            rs.getString("updated_at")
+                    );
+                    undoStack.push(undoInsert);
+                }
+            }
+
             stmt.setInt(1, id);
             int rows = stmt.executeUpdate();
             System.out.println(rows > 0 ? GREEN + "User deleted successfully." + RESET
@@ -366,6 +431,79 @@ public class Manager extends SeniorDeveloper
             System.out.println(RED + "Error deleting user: " + e.getMessage() + RESET);
         }
     }
+
+    /**
+     * Reverts the last user modification (Add, Update, or Delete) using the undo stack.
+     */
+    protected void undoLastUserAction() {
+        if (undoStack.isEmpty()) {
+            System.out.println(RED + "No user action to undo!" + RESET);
+            return;
+        }
+
+        // Pop last SQL undo command
+        String sql = undoStack.pop();
+
+        try (Connection conn = DBUtils.connect();
+             Statement stmt = conn.createStatement()) {
+
+            int affected = stmt.executeUpdate(sql);
+
+            if (affected > 0) {
+                System.out.println(GREEN + "Undo successful! Last user change reverted." + RESET);
+                System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+                System.out.println(YELLOW + "Last change has been undone from the system." + RESET);
+                System.out.println(GRAY + "──────────────────────────────────────────────────────────────────────────────" + RESET);
+
+                // ===== Extract user_id from the SQL =====
+                int uid = -1;
+                String lower = sql.toLowerCase();
+                int idx = lower.indexOf("where user_id=");
+                if (idx != -1) {
+                    try {
+                        uid = Integer.parseInt(sql.substring(idx + 13).replaceAll("[^0-9]", ""));
+                    } catch (NumberFormatException ignored) {}
+                } else if (lower.contains("values (")) {
+                    // If it was an INSERT undo (from delete), try to get the inserted id
+                    String[] parts = sql.split("[(),]");
+                    for (String p : parts) {
+                        p = p.trim();
+                        if (p.matches("\\d+")) {
+                            uid = Integer.parseInt(p);
+                            break;
+                        }
+                    }
+                }
+
+                // ===== Show restored user info if available =====
+                if (uid != -1) {
+                    try (ResultSet rs = stmt.executeQuery("SELECT * FROM users WHERE user_id=" + uid)) {
+                        if (rs.next()) {
+                            System.out.printf(BLUE + "Restored User: %s %s (%s) [Role: %s]%n" + RESET,
+                                    rs.getString("first_name"),
+                                    rs.getString("last_name"),
+                                    rs.getString("username"),
+                                    rs.getString("role"));
+                        } else {
+                            System.out.println(GRAY + "(Restored user record not found in database.)" + RESET);
+                        }
+                    }
+                } else {
+                    System.out.println(GRAY + "(User ID could not be determined from undo query.)" + RESET);
+                }
+
+            } else {
+                System.out.println(YELLOW + "Undo executed, but no rows were affected." + RESET);
+            }
+
+        } catch (SQLException e) {
+            System.out.println(RED + "Undo failed: " + e.getMessage() + RESET);
+            // If undo failed, push back to stack for retry safety
+            undoStack.push(sql);
+        }
+    }
+
+
 
     /**
      * Displays contact-related statistics such as total count, LinkedIn usage,

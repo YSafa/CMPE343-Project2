@@ -3,7 +3,10 @@ package utils;
 import java.util.Scanner;
 import static utils.ConsoleUtils.*;
 
-
+/**
+ * Utility class for showing ASCII animations in the console.
+ * It includes opening and closing animations used in the system.
+ */
 public class AnimUtils
 {
     /**
